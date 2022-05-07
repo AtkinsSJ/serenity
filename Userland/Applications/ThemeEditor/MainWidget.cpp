@@ -390,7 +390,6 @@ void MainWidget::save_to_file(Core::File& file)
 void MainWidget::add_property_tab(PropertyTab& property_tab)
 {
     auto& scrollable_container = m_property_tabs->add_tab<GUI::ScrollableContainerWidget>(property_tab.title);
-    scrollable_container.set_should_hide_unnecessary_scrollbars(true);
 
     auto properties_list = GUI::Widget::construct();
     scrollable_container.set_widget(properties_list);
