@@ -397,9 +397,6 @@ void MainWidget::add_property_tab(PropertyTab& property_tab)
     properties_list->set_layout<GUI::VerticalBoxLayout>();
     properties_list->layout()->set_spacing(12);
     properties_list->layout()->set_margins({ 4 });
-    // FIXME: This is a hack, without which the properties_list doesn't get the correct height.
-    //        However, it makes the width wrong.
-    properties_list->set_shrink_to_fit(true);
 
     for (auto const& property : property_tab.properties) {
         NonnullRefPtr<GUI::Widget> row_widget = properties_list->add<GUI::Widget>();
