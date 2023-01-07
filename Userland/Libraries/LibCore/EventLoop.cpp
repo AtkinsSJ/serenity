@@ -15,14 +15,17 @@
 #include <AK/JsonValue.h>
 #include <AK/NeverDestroyed.h>
 #include <AK/Singleton.h>
+#include <AK/String.h>
 #include <AK/TemporaryChange.h>
 #include <AK/Time.h>
 #include <LibCore/Event.h>
 #include <LibCore/EventLoop.h>
+#include <LibCore/File.h>
 #include <LibCore/LocalServer.h>
 #include <LibCore/Notifier.h>
 #include <LibCore/Object.h>
 #include <LibCore/SessionManagement.h>
+#include <LibCore/System.h>
 #include <LibThreading/Mutex.h>
 #include <LibThreading/MutexProtected.h>
 #include <errno.h>

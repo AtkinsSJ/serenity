@@ -1,0 +1,4 @@
+endpoint SingleInstanceServer
+{
+    notify_new_launch(Vector<DeprecatedString> arguments) =|
+}

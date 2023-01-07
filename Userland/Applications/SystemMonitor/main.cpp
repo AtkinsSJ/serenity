@@ -50,6 +50,7 @@
 #include <LibGfx/Font/FontDatabase.h>
 #include <LibGfx/Palette.h>
 #include <LibMain/Main.h>
+#include <LibSingleInstance/SingleInstance.h>
 #include <LibThreading/BackgroundAction.h>
 #include <serenity.h>
 #include <signal.h>
@@ -234,9 +235,16 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
         sched_setparam(0, &param);
     }
 
-    TRY(Core::System::pledge("stdio thread proc recvfd sendfd rpath exec unix"));
+    TRY(Core::System::pledge("stdio thread proc recvfd sendfd rpath exec unix cpath fattr"));
 
     auto app = TRY(GUI::Application::try_create(arguments));
+
+    auto single_instance = TRY(Core::ensure_single_instance("SystemMonitor"sv, arguments.strings));
+    single_instance->on_new_instance = [&](auto const& arguments) {
+        dbgln("Someone created a new instance of SystemMonitor with arguments `{}`", DeprecatedString::join(' ', arguments));
+    };
+
+    TRY(Core::System::pledge("stdio thread proc recvfd sendfd rpath exec unix"));
 
     Config::pledge_domain("SystemMonitor");
 
