@@ -29,18 +29,12 @@ public:
     virtual ErrorOr<String> path() const override;
     virtual PageNode const* document() const override { return nullptr; }
 
-    virtual bool is_open() const override { return m_open; }
-    void set_open(bool open);
-
     static ErrorOr<NonnullRefPtr<SectionNode>> try_create_from_number(StringView section_number);
 
 protected:
     // In this class, the section is a number, but in lower sections it might be the same as the name.
     String m_section;
     String m_name;
-
-private:
-    bool m_open { false };
 };
 
 constexpr size_t number_of_sections = 8;

@@ -26,7 +26,8 @@ public:
     Node const* parent() const { return m_parent; };
     virtual ErrorOr<String> name() const = 0;
     virtual bool is_page() const { return false; }
-    virtual bool is_open() const { return false; }
+    bool is_open() const { return m_is_open; }
+    void set_open(bool open) { m_is_open = open; }
     virtual ErrorOr<String> path() const = 0;
     virtual PageNode const* document() const = 0;
 
@@ -48,6 +49,7 @@ private:
     RefPtr<Node> m_parent;
     mutable NonnullRefPtrVector<Node> m_children;
     mutable bool m_reified { false };
+    bool m_is_open { false };
 };
 
 }

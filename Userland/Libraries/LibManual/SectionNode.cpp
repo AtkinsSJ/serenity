@@ -31,13 +31,6 @@ ErrorOr<String> SectionNode::name() const
     return String::formatted("{}. {}", m_section, m_name);
 }
 
-void SectionNode::set_open(bool open)
-{
-    if (m_open == open)
-        return;
-    m_open = open;
-}
-
 Array<NonnullRefPtr<SectionNode>, number_of_sections> const sections = { {
     make_ref_counted<SectionNode>(nullptr, "1"sv, "User Programs"sv),
     make_ref_counted<SectionNode>(nullptr, "2"sv, "System Calls"sv),
