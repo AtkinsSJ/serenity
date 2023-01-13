@@ -52,7 +52,7 @@ Optional<GUI::ModelIndex> ManualModel::index_from_path(StringView path) const
     return {};
 }
 
-Optional<String> ManualModel::page_name(const GUI::ModelIndex& index) const
+Optional<String const&> ManualModel::page_name(GUI::ModelIndex const& index) const
 {
     if (!index.is_valid())
         return {};
@@ -60,13 +60,10 @@ Optional<String> ManualModel::page_name(const GUI::ModelIndex& index) const
     if (!node->is_page())
         return {};
     auto* page = static_cast<Manual::PageNode const*>(node);
-    auto path = page->name();
-    if (path.is_error())
-        return {};
-    return path.release_value();
+    return page->name();
 }
 
-Optional<String> ManualModel::page_path(const GUI::ModelIndex& index) const
+Optional<String const&> ManualModel::page_path(GUI::ModelIndex const& index) const
 {
     if (!index.is_valid())
         return {};
@@ -74,10 +71,7 @@ Optional<String> ManualModel::page_path(const GUI::ModelIndex& index) const
     auto page = node->document();
     if (!page)
         return {};
-    auto path = page->path();
-    if (path.is_error())
-        return {};
-    return path.release_value();
+    return page->path();
 }
 
 ErrorOr<StringView> ManualModel::page_view(String const& path) const
@@ -99,7 +93,7 @@ ErrorOr<StringView> ManualModel::page_view(String const& path) const
     return view;
 }
 
-Optional<String> ManualModel::page_and_section(const GUI::ModelIndex& index) const
+Optional<String> ManualModel::page_and_section(GUI::ModelIndex const& index) const
 {
     if (!index.is_valid())
         return {};
@@ -108,13 +102,10 @@ Optional<String> ManualModel::page_and_section(const GUI::ModelIndex& index) con
         return {};
     auto* page = static_cast<Manual::PageNode const*>(node);
     auto* section = static_cast<Manual::SectionNode const*>(page->parent());
-    auto page_name = page->name();
-    if (page_name.is_error())
+    auto page_and_section = String::formatted("{}({})", page->name(), section->section_name());
+    if (page_and_section.is_error())
         return {};
-    auto name = String::formatted("{}({})", page_name.release_value(), section->section_name());
-    if (name.is_error())
-        return {};
-    return name.release_value();
+    return page_and_section.release_value();
 }
 
 GUI::ModelIndex ManualModel::index(int row, int column, const GUI::ModelIndex& parent_index) const
@@ -172,7 +163,7 @@ int ManualModel::column_count(const GUI::ModelIndex&) const
     return 1;
 }
 
-GUI::Variant ManualModel::data(const GUI::ModelIndex& index, GUI::ModelRole role) const
+GUI::Variant ManualModel::data(GUI::ModelIndex const& index, GUI::ModelRole role) const
 {
     auto* node = static_cast<Manual::Node const*>(index.internal_data());
     switch (role) {
@@ -185,9 +176,7 @@ GUI::Variant ManualModel::data(const GUI::ModelIndex& index, GUI::ModelRole role
                 return DeprecatedString(page.release_value());
         return {};
     case GUI::ModelRole::Display:
-        if (auto name = node->name(); !name.is_error())
-            return name.release_value();
-        return {};
+        return node->name();
     case GUI::ModelRole::Icon:
         if (node->is_page())
             return m_page_icon;
@@ -199,14 +188,14 @@ GUI::Variant ManualModel::data(const GUI::ModelIndex& index, GUI::ModelRole role
     }
 }
 
-void ManualModel::update_section_node_on_toggle(const GUI::ModelIndex& index, bool const open)
+void ManualModel::update_section_node_on_toggle(GUI::ModelIndex const& index, bool const open)
 {
     auto* node = static_cast<Manual::Node*>(index.internal_data());
     if (is<Manual::SectionNode>(*node))
         static_cast<Manual::SectionNode*>(node)->set_open(open);
 }
 
-TriState ManualModel::data_matches(const GUI::ModelIndex& index, const GUI::Variant& term) const
+TriState ManualModel::data_matches(GUI::ModelIndex const& index, const GUI::Variant& term) const
 {
     auto name = page_name(index);
     if (!name.has_value())

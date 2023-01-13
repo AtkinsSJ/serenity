@@ -121,10 +121,7 @@ MainWidget::MainWidget()
                 dbgln("Error opening page: {}", maybe_page.error());
                 return;
             }
-            auto maybe_path = maybe_page.value()->path();
-            if (!maybe_path.is_error())
-                return;
-            open_page(maybe_path.release_value());
+            open_page(maybe_page.value()->path());
         } else {
             open_external(url);
         }
@@ -184,7 +181,7 @@ ErrorOr<void> MainWidget::set_start_page(Vector<StringView, 2> query_parameters)
         m_filter_model->set_filter_term(m_search_box->text());
         m_go_home_action->activate();
     } else {
-        auto const page = TRY(result.value()->path());
+        auto const page = result.value()->path();
         m_history.push(page);
         open_page(page);
     }
@@ -193,7 +190,7 @@ ErrorOr<void> MainWidget::set_start_page(Vector<StringView, 2> query_parameters)
 
 ErrorOr<void> MainWidget::initialize_fallibles(GUI::Window& window)
 {
-    static String const help_index_path = TRY(TRY(Manual::PageNode::help_index_page())->path());
+    static String const help_index_path = TRY(Manual::PageNode::help_index_page())->path();
     m_go_home_action = GUI::CommonActions::make_go_home_action([this](auto&) {
         m_history.push(help_index_path);
         open_page(help_index_path);
@@ -214,7 +211,7 @@ ErrorOr<void> MainWidget::initialize_fallibles(GUI::Window& window)
     TRY(go_menu->try_add_action(*m_go_home_action));
 
     auto help_menu = TRY(window.try_add_menu("&Help"));
-    String help_page_path = TRY(TRY(try_make_ref_counted<Manual::PageNode>(Manual::sections[1 - 1], TRY(String::from_utf8("Help"sv))))->path());
+    String help_page_path = TRY(try_make_ref_counted<Manual::PageNode>(Manual::sections[1 - 1], TRY(String::from_utf8("Help"sv))))->path();
     TRY(help_menu->try_add_action(GUI::CommonActions::make_command_palette_action(&window)));
     TRY(help_menu->try_add_action(GUI::Action::create("&Contents", { Key_F1 }, TRY(Gfx::Bitmap::try_load_from_file("/res/icons/16x16/filetype-unknown.png"sv)), [this, help_page_path = move(help_page_path)](auto&) {
         open_page(help_page_path);

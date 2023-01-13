@@ -75,7 +75,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
         query_parameters.append(name_argument);
 
     auto page = TRY(Manual::Node::try_create_from_query(query_parameters));
-    auto page_name = TRY(page->name());
+    auto page_name = page->name();
     auto const* section = static_cast<Manual::SectionNode const*>(page->parent());
 
     if (pager.is_empty())
@@ -85,11 +85,11 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
                     .to_deprecated_string();
     pid_t pager_pid = TRY(pipe_to_pager(pager));
 
-    auto file = TRY(Core::Stream::File::open(TRY(page->path()), Core::Stream::OpenMode::Read));
+    auto file = TRY(Core::Stream::File::open(page->path(), Core::Stream::OpenMode::Read));
 
     TRY(Core::System::pledge("stdio proc"));
 
-    dbgln("Loading man page from {}", TRY(page->path()));
+    dbgln("Loading man page from {}", page->path());
     auto buffer = TRY(file->read_until_eof());
     auto source = DeprecatedString::copy(buffer);
 

@@ -24,11 +24,11 @@ public:
 
     ErrorOr<Span<NonnullRefPtr<Node>>> children() const;
     Node const* parent() const { return m_parent; };
-    ErrorOr<String> name() const { return m_name; };
+    String const& name() const { return m_name; };
     virtual bool is_page() const { return false; }
     bool is_open() const { return m_is_open; }
     void set_open(bool open) { m_is_open = open; }
-    ErrorOr<String> path() const { return m_path; };
+    String const& path() const { return m_path; };
     virtual PageNode const* document() const = 0;
 
     // Backend for the command-line argument format that Help and man accept. Handles:

@@ -18,7 +18,7 @@ public:
     virtual ~PageNode() override = default;
 
     PageNode(NonnullRefPtr<Node> section, String page)
-        : Node(section.ptr(), page, MUST(String::formatted("{}/{}.md", MUST(section->path()), page)))
+        : Node(section.ptr(), page, MUST(String::formatted("{}/{}.md", section->path(), page)))
     {
     }
 

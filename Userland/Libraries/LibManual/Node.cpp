@@ -38,7 +38,7 @@ ErrorOr<Span<NonnullRefPtr<Node>>> Node::children() const
     if (!m_reified) {
         m_reified = true;
 
-        auto own_path = TRY(path());
+        auto own_path = path();
         Core::DirIterator dir_iter { own_path.to_deprecated_string(), Core::DirIterator::Flags::SkipDots };
 
         struct Child {
@@ -102,7 +102,7 @@ ErrorOr<NonnullRefPtr<PageNode>> Node::try_create_from_query(Vector<StringView, 
         Optional<NonnullRefPtr<PageNode>> maybe_page;
         for (auto const& section : sections) {
             auto const page = TRY(try_make_ref_counted<PageNode>(section, TRY(String::from_utf8(first_query_parameter))));
-            if (Core::File::exists(TRY(page->path()))) {
+            if (Core::File::exists(page->path())) {
                 maybe_page = page;
                 break;
             }
@@ -115,7 +115,7 @@ ErrorOr<NonnullRefPtr<PageNode>> Node::try_create_from_query(Vector<StringView, 
     auto second_query_parameter = *query_parameter_iterator;
     auto section = TRY(SectionNode::try_create_from_number(first_query_parameter));
     auto const page = TRY(try_make_ref_counted<PageNode>(section, TRY(String::from_utf8(second_query_parameter))));
-    if (Core::File::exists(TRY(page->path())))
+    if (Core::File::exists(page->path()))
         return page;
     return Error::from_string_literal("Page doesn't exist in section");
 }
@@ -142,7 +142,7 @@ ErrorOr<NonnullRefPtr<Node>> Node::try_find_from_help_url(URL const& url)
         auto next_path_segment = TRY(String::from_deprecated_string(paths.take_first()));
         auto children = TRY(current_node->children());
         for (auto const& child : children) {
-            if (TRY(child->name()) == next_path_segment) {
+            if (child->name() == next_path_segment) {
                 current_node = child;
                 break;
             }
