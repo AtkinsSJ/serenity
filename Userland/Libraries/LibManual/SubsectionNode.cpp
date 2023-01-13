@@ -11,12 +11,9 @@
 namespace Manual {
 
 SubsectionNode::SubsectionNode(NonnullRefPtr<Node> parent, StringView name)
-    : SectionNode(name, name)
-    , m_parent(move(parent))
+    : SectionNode(move(parent), name, name)
 {
 }
-
-Node const* SubsectionNode::parent() const { return m_parent; }
 
 PageNode const* SubsectionNode::document() const
 {
@@ -40,7 +37,7 @@ ErrorOr<String> SubsectionNode::name() const { return m_name; }
 
 ErrorOr<String> SubsectionNode::path() const
 {
-    return String::formatted("{}/{}", TRY(m_parent->path()), m_section);
+    return String::formatted("{}/{}", TRY(parent()->path()), m_section);
 }
 
 }

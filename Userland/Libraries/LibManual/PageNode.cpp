@@ -7,18 +7,12 @@
 
 #include "PageNode.h"
 #include "SectionNode.h"
-#include <AK/RefPtr.h>
 
 namespace Manual {
 
-Node const* PageNode::parent() const
-{
-    return m_section.ptr();
-}
-
 ErrorOr<String> PageNode::path() const
 {
-    return TRY(String::formatted("{}/{}.md", TRY(m_section->path()), m_page));
+    return TRY(String::formatted("{}/{}.md", TRY(parent()->path()), m_page));
 }
 
 ErrorOr<NonnullRefPtr<PageNode>> PageNode::help_index_page()

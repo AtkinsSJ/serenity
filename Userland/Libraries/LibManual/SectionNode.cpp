@@ -39,14 +39,14 @@ void SectionNode::set_open(bool open)
 }
 
 Array<NonnullRefPtr<SectionNode>, number_of_sections> const sections = { {
-    make_ref_counted<SectionNode>("1"sv, "User Programs"sv),
-    make_ref_counted<SectionNode>("2"sv, "System Calls"sv),
-    make_ref_counted<SectionNode>("3"sv, "Library Functions"sv),
-    make_ref_counted<SectionNode>("4"sv, "Special Files"sv),
-    make_ref_counted<SectionNode>("5"sv, "File Formats"sv),
-    make_ref_counted<SectionNode>("6"sv, "Games"sv),
-    make_ref_counted<SectionNode>("7"sv, "Miscellanea"sv),
-    make_ref_counted<SectionNode>("8"sv, "Sysadmin Tools"sv),
+    make_ref_counted<SectionNode>(nullptr, "1"sv, "User Programs"sv),
+    make_ref_counted<SectionNode>(nullptr, "2"sv, "System Calls"sv),
+    make_ref_counted<SectionNode>(nullptr, "3"sv, "Library Functions"sv),
+    make_ref_counted<SectionNode>(nullptr, "4"sv, "Special Files"sv),
+    make_ref_counted<SectionNode>(nullptr, "5"sv, "File Formats"sv),
+    make_ref_counted<SectionNode>(nullptr, "6"sv, "Games"sv),
+    make_ref_counted<SectionNode>(nullptr, "7"sv, "Miscellanea"sv),
+    make_ref_counted<SectionNode>(nullptr, "8"sv, "Sysadmin Tools"sv),
 } };
 
 }

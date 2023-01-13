@@ -16,13 +16,9 @@ public:
     SubsectionNode(NonnullRefPtr<Node> parent, StringView name);
     virtual ~SubsectionNode() = default;
 
-    virtual Node const* parent() const override;
     virtual ErrorOr<String> path() const override;
     virtual ErrorOr<String> name() const override;
     virtual PageNode const* document() const override;
-
-protected:
-    NonnullRefPtr<Node> m_parent;
 };
 
 }

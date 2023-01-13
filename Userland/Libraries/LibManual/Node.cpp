@@ -23,6 +23,11 @@
 
 namespace Manual {
 
+Node::Node(RefPtr<Manual::Node> parent)
+    : m_parent(move(parent))
+{
+}
+
 ErrorOr<Span<NonnullRefPtr<Node>>> Node::children() const
 {
     if (is_page())

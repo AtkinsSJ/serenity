@@ -17,13 +17,13 @@ class SectionNode : public Node {
 public:
     virtual ~SectionNode() override = default;
 
-    SectionNode(StringView section, StringView name)
-        : m_section(MUST(String::from_utf8(section)))
+    SectionNode(RefPtr<Node> parent, StringView section, StringView name)
+        : Node(move(parent))
+        , m_section(MUST(String::from_utf8(section)))
         , m_name(MUST(String::from_utf8(name)))
     {
     }
 
-    virtual Node const* parent() const override { return nullptr; }
     virtual ErrorOr<String> name() const override;
     String const& section_name() const { return m_section; }
     virtual ErrorOr<String> path() const override;

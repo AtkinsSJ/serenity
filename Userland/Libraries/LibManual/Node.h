@@ -10,6 +10,7 @@
 
 #include <AK/NonnullRefPtrVector.h>
 #include <AK/RefCounted.h>
+#include <AK/RefPtr.h>
 #include <AK/String.h>
 #include <AK/StringView.h>
 
@@ -22,7 +23,7 @@ public:
     virtual ~Node() = default;
 
     ErrorOr<Span<NonnullRefPtr<Node>>> children() const;
-    virtual Node const* parent() const = 0;
+    Node const* parent() const { return m_parent; };
     virtual ErrorOr<String> name() const = 0;
     virtual bool is_page() const { return false; }
     virtual bool is_open() const { return false; }
@@ -40,7 +41,11 @@ public:
     // This will automatically start discovering pages by inspecting the filesystem.
     static ErrorOr<NonnullRefPtr<Node>> try_find_from_help_url(URL const&);
 
+protected:
+    explicit Node(RefPtr<Node> parent);
+
 private:
+    RefPtr<Node> m_parent;
     mutable NonnullRefPtrVector<Node> m_children;
     mutable bool m_reified { false };
 };
