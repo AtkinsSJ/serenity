@@ -26,11 +26,6 @@ ErrorOr<String> SectionNode::path() const
     return String::formatted("{}/{}{}", manual_base_path, top_level_section_prefix, m_section);
 }
 
-ErrorOr<String> SectionNode::name() const
-{
-    return String::formatted("{}. {}", m_section, m_name);
-}
-
 Array<NonnullRefPtr<SectionNode>, number_of_sections> const sections = { {
     make_ref_counted<SectionNode>(nullptr, "1"sv, "User Programs"sv),
     make_ref_counted<SectionNode>(nullptr, "2"sv, "System Calls"sv),

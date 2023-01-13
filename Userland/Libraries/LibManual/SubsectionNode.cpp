@@ -11,7 +11,7 @@
 namespace Manual {
 
 SubsectionNode::SubsectionNode(NonnullRefPtr<Node> parent, StringView name)
-    : SectionNode(move(parent), name, name)
+    : SectionNode(move(parent), MUST(String::from_utf8(name)))
 {
 }
 
@@ -27,13 +27,11 @@ PageNode const* SubsectionNode::document() const
         auto sibling_name = sibling->name();
         if (sibling_name.is_error())
             continue;
-        if (sibling_name.value() == m_name && is<PageNode>(*sibling))
+        if (sibling_name.value() == name().value() && is<PageNode>(*sibling))
             return static_cast<PageNode*>(&*sibling);
     }
     return nullptr;
 }
-
-ErrorOr<String> SubsectionNode::name() const { return m_name; }
 
 ErrorOr<String> SubsectionNode::path() const
 {

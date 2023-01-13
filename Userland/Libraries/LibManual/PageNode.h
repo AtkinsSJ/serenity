@@ -18,21 +18,16 @@ public:
     virtual ~PageNode() override = default;
 
     PageNode(NonnullRefPtr<Node> section, String page)
-        : Node(section.ptr())
-        , m_page(move(page))
+        : Node(section.ptr(), move(page))
     {
     }
 
-    virtual ErrorOr<String> name() const override { return m_page; };
     virtual bool is_page() const override { return true; }
     virtual PageNode const* document() const override { return this; };
 
     virtual ErrorOr<String> path() const override;
 
     static ErrorOr<NonnullRefPtr<PageNode>> help_index_page();
-
-private:
-    String m_page;
 };
 
 }

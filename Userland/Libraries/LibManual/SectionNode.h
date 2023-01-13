@@ -18,13 +18,17 @@ public:
     virtual ~SectionNode() override = default;
 
     SectionNode(RefPtr<Node> parent, StringView section, StringView name)
-        : Node(move(parent))
+        : Node(move(parent), MUST(String::formatted("{}. {}", section, name)))
         , m_section(MUST(String::from_utf8(section)))
-        , m_name(MUST(String::from_utf8(name)))
     {
     }
 
-    virtual ErrorOr<String> name() const override;
+    SectionNode(RefPtr<Node> parent, String name)
+        : Node(move(parent), name)
+        , m_section(name)
+    {
+    }
+
     String const& section_name() const { return m_section; }
     virtual ErrorOr<String> path() const override;
     virtual PageNode const* document() const override { return nullptr; }
@@ -34,7 +38,6 @@ public:
 protected:
     // In this class, the section is a number, but in lower sections it might be the same as the name.
     String m_section;
-    String m_name;
 };
 
 constexpr size_t number_of_sections = 8;

@@ -12,7 +12,7 @@ namespace Manual {
 
 ErrorOr<String> PageNode::path() const
 {
-    return TRY(String::formatted("{}/{}.md", TRY(parent()->path()), m_page));
+    return TRY(String::formatted("{}/{}.md", TRY(parent()->path()), TRY(name())));
 }
 
 ErrorOr<NonnullRefPtr<PageNode>> PageNode::help_index_page()

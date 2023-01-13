@@ -23,8 +23,9 @@
 
 namespace Manual {
 
-Node::Node(RefPtr<Manual::Node> parent)
+Node::Node(RefPtr<Manual::Node> parent, String name)
     : m_parent(move(parent))
+    , m_name(move(name))
 {
 }
 

@@ -17,7 +17,6 @@ public:
     virtual ~SubsectionNode() = default;
 
     virtual ErrorOr<String> path() const override;
-    virtual ErrorOr<String> name() const override;
     virtual PageNode const* document() const override;
 };
 

@@ -24,7 +24,7 @@ public:
 
     ErrorOr<Span<NonnullRefPtr<Node>>> children() const;
     Node const* parent() const { return m_parent; };
-    virtual ErrorOr<String> name() const = 0;
+    ErrorOr<String> name() const { return m_name; };
     virtual bool is_page() const { return false; }
     bool is_open() const { return m_is_open; }
     void set_open(bool open) { m_is_open = open; }
@@ -43,10 +43,11 @@ public:
     static ErrorOr<NonnullRefPtr<Node>> try_find_from_help_url(URL const&);
 
 protected:
-    explicit Node(RefPtr<Node> parent);
+    explicit Node(RefPtr<Node> parent, String name);
 
 private:
     RefPtr<Node> m_parent;
+    String m_name;
     mutable NonnullRefPtrVector<Node> m_children;
     mutable bool m_reified { false };
     bool m_is_open { false };
