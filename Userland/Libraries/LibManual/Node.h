@@ -28,7 +28,7 @@ public:
     virtual bool is_page() const { return false; }
     bool is_open() const { return m_is_open; }
     void set_open(bool open) { m_is_open = open; }
-    virtual ErrorOr<String> path() const = 0;
+    ErrorOr<String> path() const { return m_path; };
     virtual PageNode const* document() const = 0;
 
     // Backend for the command-line argument format that Help and man accept. Handles:
@@ -43,11 +43,12 @@ public:
     static ErrorOr<NonnullRefPtr<Node>> try_find_from_help_url(URL const&);
 
 protected:
-    explicit Node(RefPtr<Node> parent, String name);
+    explicit Node(RefPtr<Node> parent, String name, String path);
 
 private:
     RefPtr<Node> m_parent;
     String m_name;
+    String m_path;
     mutable NonnullRefPtrVector<Node> m_children;
     mutable bool m_reified { false };
     bool m_is_open { false };

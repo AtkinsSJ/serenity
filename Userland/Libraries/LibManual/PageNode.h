@@ -18,14 +18,12 @@ public:
     virtual ~PageNode() override = default;
 
     PageNode(NonnullRefPtr<Node> section, String page)
-        : Node(section.ptr(), move(page))
+        : Node(section.ptr(), page, MUST(String::formatted("{}/{}.md", MUST(section->path()), page)))
     {
     }
 
     virtual bool is_page() const override { return true; }
     virtual PageNode const* document() const override { return this; };
-
-    virtual ErrorOr<String> path() const override;
 
     static ErrorOr<NonnullRefPtr<PageNode>> help_index_page();
 };

@@ -11,7 +11,7 @@
 namespace Manual {
 
 SubsectionNode::SubsectionNode(NonnullRefPtr<Node> parent, StringView name)
-    : SectionNode(move(parent), MUST(String::from_utf8(name)))
+    : SectionNode(parent, MUST(String::from_utf8(name)), MUST(String::formatted("{}/{}", MUST(parent->path()), name)))
 {
 }
 
@@ -31,11 +31,6 @@ PageNode const* SubsectionNode::document() const
             return static_cast<PageNode*>(&*sibling);
     }
     return nullptr;
-}
-
-ErrorOr<String> SubsectionNode::path() const
-{
-    return String::formatted("{}/{}", TRY(parent()->path()), m_section);
 }
 
 }

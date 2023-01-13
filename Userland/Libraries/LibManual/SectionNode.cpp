@@ -21,11 +21,6 @@ ErrorOr<NonnullRefPtr<SectionNode>> SectionNode::try_create_from_number(StringVi
     return sections[section_number - 1];
 }
 
-ErrorOr<String> SectionNode::path() const
-{
-    return String::formatted("{}/{}{}", manual_base_path, top_level_section_prefix, m_section);
-}
-
 Array<NonnullRefPtr<SectionNode>, number_of_sections> const sections = { {
     make_ref_counted<SectionNode>(nullptr, "1"sv, "User Programs"sv),
     make_ref_counted<SectionNode>(nullptr, "2"sv, "System Calls"sv),

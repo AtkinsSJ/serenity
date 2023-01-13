@@ -10,6 +10,7 @@
 #include <AK/Error.h>
 #include <AK/String.h>
 #include <LibManual/Node.h>
+#include <LibManual/Path.h>
 
 namespace Manual {
 
@@ -18,19 +19,18 @@ public:
     virtual ~SectionNode() override = default;
 
     SectionNode(RefPtr<Node> parent, StringView section, StringView name)
-        : Node(move(parent), MUST(String::formatted("{}. {}", section, name)))
+        : Node(move(parent), MUST(String::formatted("{}. {}", section, name)), MUST(String::formatted("{}/{}{}", manual_base_path, top_level_section_prefix, section)))
         , m_section(MUST(String::from_utf8(section)))
     {
     }
 
-    SectionNode(RefPtr<Node> parent, String name)
-        : Node(move(parent), name)
+    SectionNode(RefPtr<Node> parent, String name, String path)
+        : Node(move(parent), name, move(path))
         , m_section(name)
     {
     }
 
     String const& section_name() const { return m_section; }
-    virtual ErrorOr<String> path() const override;
     virtual PageNode const* document() const override { return nullptr; }
 
     static ErrorOr<NonnullRefPtr<SectionNode>> try_create_from_number(StringView section_number);

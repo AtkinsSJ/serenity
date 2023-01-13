@@ -16,7 +16,6 @@ public:
     SubsectionNode(NonnullRefPtr<Node> parent, StringView name);
     virtual ~SubsectionNode() = default;
 
-    virtual ErrorOr<String> path() const override;
     virtual PageNode const* document() const override;
 };
 
