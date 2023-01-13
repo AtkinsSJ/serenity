@@ -10,7 +10,7 @@
 
 namespace Manual {
 
-SubsectionNode::SubsectionNode(NonnullRefPtr<SectionNode> parent, StringView name)
+SubsectionNode::SubsectionNode(NonnullRefPtr<Node> parent, StringView name)
     : SectionNode(name, name)
     , m_parent(move(parent))
 {

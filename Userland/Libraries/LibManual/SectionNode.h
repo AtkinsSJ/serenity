@@ -23,12 +23,6 @@ public:
     {
     }
 
-    virtual ErrorOr<Span<NonnullRefPtr<Node>>> children() const override
-    {
-        TRY(reify_if_needed());
-        return m_children.span();
-    }
-
     virtual Node const* parent() const override { return nullptr; }
     virtual ErrorOr<String> name() const override;
     String const& section_name() const { return m_section; }
@@ -46,10 +40,6 @@ protected:
     String m_name;
 
 private:
-    ErrorOr<void> reify_if_needed() const;
-
-    mutable NonnullRefPtrVector<Node> m_children;
-    mutable bool m_reified { false };
     bool m_open { false };
 };
 

@@ -16,12 +16,6 @@ Node const* PageNode::parent() const
     return m_section.ptr();
 }
 
-ErrorOr<Span<NonnullRefPtr<Node>>> PageNode::children() const
-{
-    static NonnullRefPtrVector<Node> empty_vector;
-    return empty_vector.span();
-}
-
 ErrorOr<String> PageNode::path() const
 {
     return TRY(String::formatted("{}/{}.md", TRY(m_section->path()), m_page));

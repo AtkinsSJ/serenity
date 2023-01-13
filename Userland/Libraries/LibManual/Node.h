@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2019-2020, Sergey Bugaev <bugaevc@serenityos.org>
  * Copyright (c) 2022, the SerenityOS developers.
+ * Copyright (c) 2023, Sam Atkins <atkinssj@serenityos.org>
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -20,7 +21,7 @@ class Node : public RefCounted<Node> {
 public:
     virtual ~Node() = default;
 
-    virtual ErrorOr<Span<NonnullRefPtr<Node>>> children() const = 0;
+    ErrorOr<Span<NonnullRefPtr<Node>>> children() const;
     virtual Node const* parent() const = 0;
     virtual ErrorOr<String> name() const = 0;
     virtual bool is_page() const { return false; }
@@ -38,6 +39,10 @@ public:
     // Finds a page via the help://man/<number>/<subsections...>/page URLs.
     // This will automatically start discovering pages by inspecting the filesystem.
     static ErrorOr<NonnullRefPtr<Node>> try_find_from_help_url(URL const&);
+
+private:
+    mutable NonnullRefPtrVector<Node> m_children;
+    mutable bool m_reified { false };
 };
 
 }

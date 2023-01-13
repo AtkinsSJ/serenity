@@ -1,5 +1,7 @@
 /*
+ * Copyright (c) 2019-2020, Sergey Bugaev <bugaevc@serenityos.org>
  * Copyright (c) 2022, kleines Filmröllchen <filmroellchen@serenityos.org>
+ * Copyright (c) 2023, Sam Atkins <atkinssj@serenityos.org>
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -7,16 +9,60 @@
 #include "Node.h"
 #include "PageNode.h"
 #include "SectionNode.h"
+#include "SubsectionNode.h"
 #include <AK/Assertions.h>
 #include <AK/LexicalPath.h>
 #include <AK/Optional.h>
+#include <AK/QuickSort.h>
 #include <AK/StringView.h>
 #include <AK/URL.h>
+#include <LibCore/DirIterator.h>
 #include <LibCore/File.h>
 #include <LibCore/Stream.h>
 #include <LibManual/Path.h>
 
 namespace Manual {
+
+ErrorOr<Span<NonnullRefPtr<Node>>> Node::children() const
+{
+    if (is_page())
+        return Span<NonnullRefPtr<Node>> {};
+
+    if (!m_reified) {
+        m_reified = true;
+
+        auto own_path = TRY(path());
+        Core::DirIterator dir_iter { own_path.to_deprecated_string(), Core::DirIterator::Flags::SkipDots };
+
+        struct Child {
+            NonnullRefPtr<Node> node;
+            String name_for_sorting;
+        };
+        Vector<Child> children;
+
+        while (dir_iter.has_next()) {
+            LexicalPath lexical_path(dir_iter.next_path());
+            if (lexical_path.extension() != "md") {
+                if (Core::File::is_directory(LexicalPath::absolute_path(own_path.to_deprecated_string(), lexical_path.string()))) {
+                    dbgln("Found subsection {}", lexical_path);
+                    children.append({ .node = TRY(try_make_ref_counted<SubsectionNode>(*this, lexical_path.title())),
+                        .name_for_sorting = TRY(String::from_utf8(lexical_path.title())) });
+                }
+            } else {
+                children.append({ .node = TRY(try_make_ref_counted<PageNode>(*this, TRY(String::from_utf8(lexical_path.title())))),
+                    .name_for_sorting = TRY(String::from_utf8(lexical_path.title())) });
+            }
+        }
+
+        quick_sort(children, [](auto const& a, auto const& b) { return a.name_for_sorting < b.name_for_sorting; });
+
+        m_children.ensure_capacity(children.size());
+        for (auto child : children)
+            m_children.unchecked_append(move(child.node));
+    }
+
+    return m_children.span();
+}
 
 ErrorOr<NonnullRefPtr<PageNode>> Node::try_create_from_query(Vector<StringView, 2> const& query_parameters)
 {

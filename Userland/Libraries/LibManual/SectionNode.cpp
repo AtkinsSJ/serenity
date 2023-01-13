@@ -7,11 +7,6 @@
 #include "SectionNode.h"
 #include "PageNode.h"
 #include "Path.h"
-#include "SubsectionNode.h"
-#include <AK/LexicalPath.h>
-#include <AK/QuickSort.h>
-#include <LibCore/DirIterator.h>
-#include <LibCore/File.h>
 
 namespace Manual {
 
@@ -34,44 +29,6 @@ ErrorOr<String> SectionNode::path() const
 ErrorOr<String> SectionNode::name() const
 {
     return String::formatted("{}. {}", m_section, m_name);
-}
-
-ErrorOr<void> SectionNode::reify_if_needed() const
-{
-    if (m_reified)
-        return {};
-    m_reified = true;
-
-    auto own_path = TRY(path());
-    Core::DirIterator dir_iter { own_path.to_deprecated_string(), Core::DirIterator::Flags::SkipDots };
-
-    struct Child {
-        NonnullRefPtr<Node> node;
-        String name_for_sorting;
-    };
-    Vector<Child> children;
-
-    while (dir_iter.has_next()) {
-        LexicalPath lexical_path(dir_iter.next_path());
-        if (lexical_path.extension() != "md") {
-            if (Core::File::is_directory(LexicalPath::absolute_path(own_path.to_deprecated_string(), lexical_path.string()))) {
-                dbgln("Found subsection {}", lexical_path);
-                children.append({ .node = TRY(try_make_ref_counted<SubsectionNode>(*this, lexical_path.title())),
-                    .name_for_sorting = TRY(String::from_utf8(lexical_path.title())) });
-            }
-        } else {
-            children.append({ .node = TRY(try_make_ref_counted<PageNode>(*this, TRY(String::from_utf8(lexical_path.title())))),
-                .name_for_sorting = TRY(String::from_utf8(lexical_path.title())) });
-        }
-    }
-
-    quick_sort(children, [](auto const& a, auto const& b) { return a.name_for_sorting < b.name_for_sorting; });
-
-    m_children.ensure_capacity(children.size());
-    for (auto child : children)
-        m_children.unchecked_append(move(child.node));
-
-    return {};
 }
 
 void SectionNode::set_open(bool open)
