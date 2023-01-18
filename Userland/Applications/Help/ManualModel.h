@@ -14,10 +14,7 @@
 
 class ManualModel final : public GUI::Model {
 public:
-    static ErrorOr<NonnullRefPtr<ManualModel>> create()
-    {
-        return adopt_nonnull_ref_or_enomem(new (nothrow) ManualModel);
-    }
+    static ErrorOr<NonnullRefPtr<ManualModel>> create();
 
     virtual ~ManualModel() override {};
 
@@ -37,7 +34,7 @@ public:
     virtual GUI::ModelIndex index(int row, int column = 0, const GUI::ModelIndex& parent = GUI::ModelIndex()) const override;
 
 private:
-    ManualModel();
+    ManualModel(NonnullRefPtr<Gfx::Bitmap> section_open_icon, NonnullRefPtr<Gfx::Bitmap> section_icon, NonnullRefPtr<Gfx::Bitmap> page_icon);
 
     GUI::Icon m_section_open_icon;
     GUI::Icon m_section_icon;

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2020, Sergey Bugaev <bugaevc@serenityos.org>
+ * Copyright (c) 2023, Sam Atkins <atkinssj@serenityos.org>
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -12,11 +13,20 @@
 #include <LibManual/Path.h>
 #include <LibManual/SectionNode.h>
 
-ManualModel::ManualModel()
+ErrorOr<NonnullRefPtr<ManualModel>> ManualModel::create()
 {
-    m_section_open_icon.set_bitmap_for_size(16, Gfx::Bitmap::try_load_from_file("/res/icons/16x16/book-open.png"sv).release_value_but_fixme_should_propagate_errors());
-    m_section_icon.set_bitmap_for_size(16, Gfx::Bitmap::try_load_from_file("/res/icons/16x16/book.png"sv).release_value_but_fixme_should_propagate_errors());
-    m_page_icon.set_bitmap_for_size(16, Gfx::Bitmap::try_load_from_file("/res/icons/16x16/filetype-unknown.png"sv).release_value_but_fixme_should_propagate_errors());
+    auto section_open_icon = TRY(Gfx::Bitmap::try_load_from_file("/res/icons/16x16/book-open.png"sv));
+    auto section_icon = TRY(Gfx::Bitmap::try_load_from_file("/res/icons/16x16/book.png"sv));
+    auto page_icon = TRY(Gfx::Bitmap::try_load_from_file("/res/icons/16x16/filetype-unknown.png"sv));
+
+    return adopt_nonnull_ref_or_enomem(new (nothrow) ManualModel(move(section_open_icon), move(section_icon), move(page_icon)));
+}
+
+ManualModel::ManualModel(NonnullRefPtr<Gfx::Bitmap> section_open_icon, NonnullRefPtr<Gfx::Bitmap> section_icon, NonnullRefPtr<Gfx::Bitmap> page_icon)
+{
+    m_section_open_icon.set_bitmap_for_size(16, move(section_open_icon));
+    m_section_icon.set_bitmap_for_size(16, move(section_icon));
+    m_page_icon.set_bitmap_for_size(16, move(page_icon));
 }
 
 Optional<GUI::ModelIndex> ManualModel::index_from_path(StringView path) const
