@@ -349,6 +349,26 @@ bool String::contains(char needle, CaseSensitivity case_sensitivity) const
     return contains(StringView { &needle, 1 }, case_sensitivity);
 }
 
+bool String::starts_with(StringView needle, CaseSensitivity case_sensitivity) const
+{
+    return StringUtils::starts_with(bytes_as_string_view(), needle, case_sensitivity);
+}
+
+bool String::starts_with(char needle, CaseSensitivity case_sensitivity) const
+{
+    return starts_with(StringView { &needle, 1 }, case_sensitivity);
+}
+
+bool String::ends_with(StringView needle, CaseSensitivity case_sensitivity) const
+{
+    return StringUtils::ends_with(bytes_as_string_view(), needle, case_sensitivity);
+}
+
+bool String::ends_with(char needle, CaseSensitivity case_sensitivity) const
+{
+    return ends_with(StringView { &needle, 1 }, case_sensitivity);
+}
+
 bool String::is_short_string() const
 {
     return has_short_string_bit(reinterpret_cast<uintptr_t>(m_data));

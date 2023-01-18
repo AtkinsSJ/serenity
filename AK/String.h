@@ -100,6 +100,12 @@ public:
     [[nodiscard]] bool contains(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
     [[nodiscard]] bool contains(char, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
 
+    [[nodiscard]] bool starts_with(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
+    [[nodiscard]] bool starts_with(char, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
+
+    [[nodiscard]] bool ends_with(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
+    [[nodiscard]] bool ends_with(char, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
+
     [[nodiscard]] u32 hash() const;
 
     template<Arithmetic T>
