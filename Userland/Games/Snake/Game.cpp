@@ -67,8 +67,8 @@ ErrorOr<NonnullRefPtr<Game>> Game::try_create()
         food_bitmaps.unchecked_append(bitmap.release_value());
     }
 
-    auto color = Color::from_argb(Config::read_u32("Snake"sv, "Snake"sv, "BaseColor"sv, Color(Color::Green).value()));
-    auto skin_name = Config::read_string("Snake"sv, "Snake"sv, "SnakeSkin"sv, "classic"sv);
+    auto color = Color::from_argb(Config::read_u32("Games"sv, "Snake"sv, "BaseColor"sv, Color(Color::Green).value()));
+    auto skin_name = Config::read_string("Games"sv, "Snake"sv, "SnakeSkin"sv, "classic"sv);
     auto skin = TRY(SnakeSkin::create(skin_name, color));
 
     return adopt_nonnull_ref_or_enomem(new (nothrow) Game(move(food_bitmaps), color, skin_name, move(skin)));
@@ -327,7 +327,7 @@ Direction Game::direction_to_position(Snake::Coordinate const& from, Snake::Coor
 
 void Game::config_string_did_change(DeprecatedString const& domain, DeprecatedString const& group, DeprecatedString const& key, DeprecatedString const& value)
 {
-    if (domain == "Snake"sv && group == "Snake"sv && key == "SnakeSkin"sv) {
+    if (domain == "Games"sv && group == "Snake"sv && key == "SnakeSkin"sv) {
         set_skin_name(value);
         return;
     }
@@ -335,7 +335,7 @@ void Game::config_string_did_change(DeprecatedString const& domain, DeprecatedSt
 
 void Game::config_u32_did_change(DeprecatedString const& domain, DeprecatedString const& group, DeprecatedString const& key, u32 value)
 {
-    if (domain == "Snake"sv && group == "Snake"sv && key == "BaseColor"sv) {
+    if (domain == "Games"sv && group == "Snake"sv && key == "BaseColor"sv) {
         set_skin_color(Color::from_argb(value));
         return;
     }

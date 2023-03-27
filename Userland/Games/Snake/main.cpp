@@ -32,8 +32,8 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
     auto app = TRY(GUI::Application::try_create(arguments));
 
-    Config::pledge_domain("Snake");
-    Config::monitor_domain("Snake");
+    Config::pledge_domain("Games");
+    Config::monitor_domain("Games");
 
     TRY(Desktop::Launcher::add_allowed_handler_with_only_specific_urls("/bin/Help", { URL::create_with_file_scheme("/usr/share/man/man6/Snake.md") }));
     TRY(Desktop::Launcher::seal_allowlist());
@@ -58,8 +58,8 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
     auto& game = *widget->find_descendant_of_type_named<Snake::Game>("game");
     game.set_focus(true);
 
-    auto high_score = Config::read_u32("Snake"sv, "Snake"sv, "HighScore"sv, 0);
-    auto snake_skin_name = Config::read_string("Snake"sv, "Snake"sv, "SnakeSkin"sv, "classic"sv);
+    auto high_score = Config::read_u32("Games"sv, "Snake"sv, "HighScore"sv, 0);
+    auto snake_skin_name = Config::read_string("Games"sv, "Snake"sv, "SnakeSkin"sv, "classic"sv);
 
     auto& statusbar = *widget->find_descendant_of_type_named<GUI::Statusbar>("statusbar"sv);
     statusbar.set_text(0, "Score: 0"sv);
@@ -71,7 +71,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
             return false;
 
         statusbar.set_text(1, DeprecatedString::formatted("High Score: {}", score));
-        Config::write_u32("Snake"sv, "Snake"sv, "HighScore"sv, score);
+        Config::write_u32("Games"sv, "Snake"sv, "HighScore"sv, score);
 
         high_score = score;
         return true;
@@ -104,7 +104,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
             game.pause();
         auto dialog = GUI::ColorPicker::construct(Gfx::Color::White, window);
         if (dialog->exec() == GUI::Dialog::ExecResult::OK) {
-            Config::write_u32("Snake"sv, "Snake"sv, "BaseColor"sv, dialog->color().value());
+            Config::write_u32("Games"sv, "Snake"sv, "BaseColor"sv, dialog->color().value());
             game.set_skin_color(dialog->color());
         }
         if (!was_paused)
@@ -121,7 +121,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
     auto add_skin_action = [&](StringView name, bool enable_color) -> ErrorOr<void> {
         auto action = TRY(GUI::Action::try_create_checkable(name, {}, [&, enable_color](auto& action) {
-            Config::write_string("Snake"sv, "Snake"sv, "SnakeSkin"sv, action.text());
+            Config::write_string("Games"sv, "Snake"sv, "SnakeSkin"sv, action.text());
             game.set_skin_name(action.text());
             change_snake_color->set_enabled(enable_color);
         }));

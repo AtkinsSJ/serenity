@@ -6,16 +6,19 @@ serenity_component(
 
 compile_gml(CardSettingsWidget.gml CardSettingsWidgetGML.h card_settings_widget_gml)
 compile_gml(ChessSettingsWidget.gml ChessSettingsWidgetGML.h chess_settings_widget_gml)
+compile_gml(SnakeSettingsWidget.gml SnakeSettingsWidgetGML.h snake_settings_widget_gml)
 
 set(SOURCES
     main.cpp
     CardSettingsWidget.cpp
     ChessSettingsWidget.cpp
+    SnakeSettingsWidget.cpp
 )
 
 set(GENERATED_SOURCES
     CardSettingsWidgetGML.h
     ChessSettingsWidgetGML.h
+    SnakeSettingsWidgetGML.h
 )
 
 serenity_app(GamesSettings ICON games)

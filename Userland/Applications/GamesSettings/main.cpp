@@ -6,6 +6,7 @@
 
 #include "CardSettingsWidget.h"
 #include "ChessSettingsWidget.h"
+#include "SnakeSettingsWidget.h"
 #include <LibConfig/Client.h>
 #include <LibCore/ArgsParser.h>
 #include <LibCore/System.h>
@@ -22,7 +23,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
     StringView selected_tab;
     Core::ArgsParser args_parser;
-    args_parser.add_option(selected_tab, "Tab, one of 'cards' or 'chess'", "open-tab", 't', "tab");
+    args_parser.add_option(selected_tab, "Tab, one of 'cards', 'chess', or 'snake'", "open-tab", 't', "tab");
     args_parser.parse(arguments);
 
     TRY(Core::System::unveil("/res", "r"));
@@ -37,6 +38,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
     window->set_icon(app_icon.bitmap_for_size(16));
     (void)TRY(window->add_tab<GamesSettings::CardSettingsWidget>("Cards"_short_string, "cards"sv));
     (void)TRY(window->add_tab<GamesSettings::ChessSettingsWidget>("Chess"_short_string, "chess"sv));
+    (void)TRY(window->add_tab<GamesSettings::SnakeSettingsWidget>("Snake"_short_string, "snake"sv));
     window->set_active_tab(selected_tab);
 
     window->show();
