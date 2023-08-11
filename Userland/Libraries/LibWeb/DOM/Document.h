@@ -295,6 +295,12 @@ public:
 
     void set_active_element(Element*);
 
+    Element const* target_element() const { return m_target_element.ptr(); }
+    void set_target_element(Element*);
+
+    void scroll_to_the_fragment();
+    void scroll_to_the_beginning_of_the_document();
+
     bool created_for_appropriate_template_contents() const { return m_created_for_appropriate_template_contents; }
 
     JS::NonnullGCPtr<Document> appropriate_template_contents_owner_document();
@@ -521,6 +527,11 @@ private:
     void queue_intersection_observer_task();
     void queue_an_intersection_observer_entry(IntersectionObserver::IntersectionObserver&, HighResolutionTime::DOMHighResTimeStamp time, JS::NonnullGCPtr<Geometry::DOMRectReadOnly> root_bounds, JS::NonnullGCPtr<Geometry::DOMRectReadOnly> bounding_client_rect, JS::NonnullGCPtr<Geometry::DOMRectReadOnly> intersection_rect, bool is_intersecting, double intersection_ratio, JS::NonnullGCPtr<Element> target);
 
+    struct TopOfTheDocument { };
+    using IndicatedPart = Variant<Element*, TopOfTheDocument>;
+    IndicatedPart determine_the_indicated_part() const;
+    Element* find_a_potential_indicated_element(DeprecatedString fragment) const;
+
     OwnPtr<CSS::StyleComputer> m_style_computer;
     JS::GCPtr<CSS::StyleSheetList> m_style_sheets;
     JS::GCPtr<Node> m_hovered_node;
@@ -565,6 +576,7 @@ private:
 
     JS::GCPtr<Element> m_focused_element;
     JS::GCPtr<Element> m_active_element;
+    JS::GCPtr<Element> m_target_element;
 
     bool m_created_for_appropriate_template_contents { false };
     JS::GCPtr<Document> m_associated_inert_template_document;

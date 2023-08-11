@@ -2,7 +2,7 @@
  * Copyright (c) 2018-2023, Andreas Kling <kling@serenityos.org>
  * Copyright (c) 2021-2023, Linus Groh <linusg@serenityos.org>
  * Copyright (c) 2021-2023, Luke Wilde <lukew@serenityos.org>
- * Copyright (c) 2021, Sam Atkins <atkinssj@serenityos.org>
+ * Copyright (c) 2021-2023, Sam Atkins <atkinssj@serenityos.org>
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -49,6 +49,7 @@
 #include <LibWeb/HTML/DocumentState.h>
 #include <LibWeb/HTML/EventLoop/EventLoop.h>
 #include <LibWeb/HTML/EventNames.h>
+#include <LibWeb/HTML/Focus.h>
 #include <LibWeb/HTML/HTMLAnchorElement.h>
 #include <LibWeb/HTML/HTMLAreaElement.h>
 #include <LibWeb/HTML/HTMLBaseElement.h>
@@ -1711,6 +1712,145 @@ void Document::set_active_element(Element* element)
 
     if (m_layout_root)
         m_layout_root->set_needs_display();
+}
+
+void Document::set_target_element(Element* element)
+{
+    if (m_target_element.ptr() == element)
+        return;
+
+    if (m_target_element)
+        m_target_element->set_needs_style_update(true);
+
+    m_target_element = element;
+
+    if (m_target_element)
+        m_target_element->set_needs_style_update(true);
+
+    if (m_layout_root)
+        m_layout_root->set_needs_display();
+}
+
+// https://html.spec.whatwg.org/multipage/browsing-the-web.html#the-indicated-part-of-the-document
+Document::IndicatedPart Document::determine_the_indicated_part() const
+{
+    // For an HTML document document, the following processing model must be followed to determine its indicated part:
+
+    // 1. Let fragment be document's URL's fragment.
+    auto fragment = url().raw_fragment();
+
+    // 2. If fragment is the empty string, then return the special value top of the document.
+    if (fragment.is_empty())
+        return Document::TopOfTheDocument {};
+
+    // 3. Let potentialIndicatedElement be the result of finding a potential indicated element given document and fragment.
+    auto potential_indicated_element = find_a_potential_indicated_element(fragment);
+
+    // 4. If potentialIndicatedElement is not null, then return potentialIndicatedElement.
+    if (potential_indicated_element)
+        return potential_indicated_element;
+
+    // 5. Let fragmentBytes be the result of percent-decoding fragment.
+    // 6. Let decodedFragment be the result of running UTF-8 decode without BOM on fragmentBytes.
+    auto decoded_fragment = url().fragment();
+
+    // 7. Set potentialIndicatedElement to the result of finding a potential indicated element given document and decodedFragment.
+    potential_indicated_element = find_a_potential_indicated_element(decoded_fragment);
+
+    // 8. If potentialIndicatedElement is not null, then return potentialIndicatedElement.
+    if (potential_indicated_element)
+        return potential_indicated_element;
+
+    // 9. If decodedFragment is an ASCII case-insensitive match for the string top, then return the top of the document.
+    if (Infra::is_ascii_case_insensitive_match(decoded_fragment, "top"sv))
+        return Document::TopOfTheDocument {};
+
+    // 10. Return null.
+    return nullptr;
+}
+
+// https://html.spec.whatwg.org/multipage/browsing-the-web.html#find-a-potential-indicated-element
+Element* Document::find_a_potential_indicated_element(DeprecatedString fragment) const
+{
+    // To find a potential indicated element given a Document document and a string fragment, run these steps:
+
+    // 1. If there is an element in the document tree whose root is document and that has an ID equal to
+    //    fragment, then return the first such element in tree order.
+    if (auto element = get_element_by_id(fragment))
+        return const_cast<Element*>(element.ptr());
+
+    // 2. If there is an a element in the document tree whose root is document that has a name attribute
+    //    whose value is equal to fragment, then return the first such element in tree order.
+    Element* element_with_name;
+    root().for_each_in_subtree_of_type<Element>([&](Element const& element) {
+        if (element.name() == fragment) {
+            element_with_name = const_cast<Element*>(&element);
+            return IterationDecision::Break;
+        }
+        return IterationDecision::Continue;
+    });
+    if (element_with_name)
+        return element_with_name;
+
+    // 3. Return null.
+    return nullptr;
+}
+
+// https://html.spec.whatwg.org/multipage/browsing-the-web.html#scroll-to-the-fragment-identifier
+void Document::scroll_to_the_fragment()
+{
+    // To scroll to the fragment given a Document document:
+
+    // 1. If document's indicated part is null, then set document's target element to null.
+    auto indicated_part = determine_the_indicated_part();
+    if (indicated_part.has<Element*>() && indicated_part.get<Element*>() == nullptr) {
+        set_target_element(nullptr);
+    }
+
+    // 2. Otherwise, if document's indicated part is top of the document, then:
+    else if (indicated_part.has<TopOfTheDocument>()) {
+        // 1. Set document's target element to null.
+        set_target_element(nullptr);
+
+        // FIXME: 2. Scroll to the beginning of the document for document. [CSSOMVIEW]
+
+        // 3. Return.
+        return;
+    }
+
+    // 3. Otherwise:
+    else {
+        // 1. Assert: document's indicated part is an element.
+        VERIFY(indicated_part.has<Element*>());
+
+        // 2. Let target be document's indicated part.
+        auto target = indicated_part.get<Element*>();
+
+        // 3. Set document's target element to target.
+        set_target_element(target);
+
+        // FIXME: 4. Run the ancestor details revealing algorithm on target.
+
+        // FIXME: 5. Run the ancestor hidden-until-found revealing algorithm on target.
+
+        // FIXME: 6. Scroll target into view, with behavior set to "auto", block set to "start", and inline set to "nearest". [CSSOMVIEW]
+        // FIXME: Implement the proper algorithm!
+        (void)target->scroll_into_view();
+
+        // 7. Run the focusing steps for target, with the Document's viewport as the fallback target.
+        // FIXME: Pass the Document's viewport somehow.
+        HTML::run_focusing_steps(target);
+
+        // FIXME: 8. Move the sequential focus navigation starting point to target.
+    }
+}
+
+// https://drafts.csswg.org/cssom-view-1/#scroll-to-the-beginning-of-the-document
+void Document::scroll_to_the_beginning_of_the_document()
+{
+    // FIXME: Actually implement this algorithm properly
+    if (auto browsing_context = this->browsing_context())
+        browsing_context->scroll_to({ 0, 0 });
 }
 
 DeprecatedString Document::ready_state() const
