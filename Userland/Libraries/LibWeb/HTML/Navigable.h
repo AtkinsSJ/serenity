@@ -14,6 +14,7 @@
 #include <LibWeb/HTML/POSTResource.h>
 #include <LibWeb/HTML/SourceSnapshotParams.h>
 #include <LibWeb/HTML/TokenizedFeatures.h>
+#include <LibWeb/XHR/FormData.h>
 
 namespace Web::HTML {
 
@@ -94,9 +95,11 @@ public:
         Variant<Empty, String, POSTResource> document_resource = Empty {},
         JS::GCPtr<Fetch::Infrastructure::Response> = nullptr,
         bool exceptions_enabled = false,
-        HistoryHandlingBehavior = HistoryHandlingBehavior::Push,
-        CSPNavigationType csp_navigation_type = CSPNavigationType::Other,
-        ReferrerPolicy::ReferrerPolicy = ReferrerPolicy::ReferrerPolicy::EmptyString);
+        HistoryHandlingBehavior = HistoryHandlingBehavior::Auto,
+        Optional<DeprecatedString> navigation_api_state = {},
+        Optional<Vector<XHR::FormDataEntry>> form_data_entry_list = {},
+        ReferrerPolicy::ReferrerPolicy = ReferrerPolicy::ReferrerPolicy::EmptyString,
+        Optional<DeprecatedString> user_involvement = "None");
 
     WebIDL::ExceptionOr<void> navigate_to_a_fragment(AK::URL const&, HistoryHandlingBehavior, String navigation_id);
 

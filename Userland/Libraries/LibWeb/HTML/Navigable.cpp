@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
  * Copyright (c) 2023, Aliaksandr Kalenik <kalenik.aliaksandr@gmail.com>
+ * Copyright (c) 2023, Sam Atkins <atkinssj@serenityos.org>
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -774,6 +775,12 @@ WebIDL::ExceptionOr<void> Navigable::populate_session_history_entry_document(JS:
     return {};
 }
 
+// https://fetch.spec.whatwg.org/#fetch-scheme
+static bool is_a_fetch_scheme(StringView scheme)
+{
+    return first_is_one_of(scheme, "about"sv, "blob"sv, "data"sv, "file"sv);
+}
+
 // To navigate a navigable navigable to a URL url using a Document sourceDocument,
 // with an optional POST resource, string, or null documentResource (default null),
 // an optional response-or-null response (default null), an optional boolean exceptionsEnabled (default false),
@@ -789,10 +796,17 @@ WebIDL::ExceptionOr<void> Navigable::navigate(
     JS::GCPtr<Fetch::Infrastructure::Response> response,
     bool exceptions_enabled,
     HistoryHandlingBehavior history_handling,
-    CSPNavigationType csp_navigation_type,
-    ReferrerPolicy::ReferrerPolicy referrer_policy)
+    Optional<DeprecatedString> navigation_api_state,
+    Optional<Vector<XHR::FormDataEntry>> form_data_entry_list,
+    ReferrerPolicy::ReferrerPolicy referrer_policy,
+    Optional<DeprecatedString> user_involvement)
 {
-    // 1. Let sourceSnapshotParams be the result of snapshotting source snapshot params given sourceDocument.
+    (void)navigation_api_state;
+
+    // 1. Let cspNavigationType be "form-submission" if formDataEntryList is non-null; otherwise "other".
+    CSPNavigationType csp_navigation_type = form_data_entry_list.has_value() ? CSPNavigationType::FormSubmission : CSPNavigationType::Other;
+
+    // 2. Let sourceSnapshotParams be the result of snapshotting source snapshot params given sourceDocument.
     auto source_snapshot_params = SourceSnapshotParams {
         .has_transient_activation = false,
         .sandboxing_flags = source_document->active_sandboxing_flag_set(),
@@ -801,10 +815,13 @@ WebIDL::ExceptionOr<void> Navigable::navigate(
         .source_policy_container = source_document->policy_container()
     };
 
-    // 2. Let initiatorOriginSnapshot be sourceDocument's origin.
+    // 3. Let initiatorOriginSnapshot be sourceDocument's origin.
     auto initiator_origin_snapshot = source_document->origin();
 
-    // FIXME: 3. If sourceDocument's node navigable is not allowed by sandboxing to navigate navigable given and sourceSnapshotParams, then:
+    // 4. Let initiatorBaseURLSnapshot be sourceDocument's document base URL.
+    auto initiator_base_url_snapshot = source_document->base_url();
+
+    // FIXME: 5. If sourceDocument's node navigable is not allowed by sandboxing to navigate navigable given and sourceSnapshotParams, then:
     if constexpr (false) {
         // 1. If exceptionsEnabled is true, then throw a "SecurityError" DOMException.
         if (exceptions_enabled) {
@@ -815,32 +832,37 @@ WebIDL::ExceptionOr<void> Navigable::navigate(
         return {};
     }
 
-    // 4. Let navigationId be the result of generating a random UUID.
+    // 6. Let navigationId be the result of generating a random UUID.
     String navigation_id = TRY_OR_THROW_OOM(vm(), Crypto::generate_random_uuid());
 
-    // FIXME: 5. If the surrounding agent is equal to navigable's active document's relevant agent, then continue these steps.
+    // FIXME: 7. If the surrounding agent is equal to navigable's active document's relevant agent, then continue these steps.
     //           Otherwise, queue a global task on the navigation and traversal task source given navigable's active window to continue these steps.
 
-    // FIXME: 6. If navigable's active document's unload counter is greater than 0,
+    // FIXME: 8. If navigable's active document's unload counter is greater than 0,
     //           then invoke WebDriver BiDi navigation failed with a WebDriver BiDi navigation status whose id is navigationId,
     //           status is "canceled", and url is url, and return.
 
-    // 7. If any of the following are true:
-    //    - url equals navigable's active document's URL;
-    //    - url's scheme is "javascript"; or
-    //    - navigable's active document's is initial about:blank is true
-    if (url.equals(active_document()->url())
-        || url.scheme() == "javascript"sv
-        || active_document()->is_initial_about_blank()) {
-        // then set historyHandling to "replace".
-        history_handling = HistoryHandlingBehavior::Replace;
+    // 9. If historyHandling is "auto", then:
+    if (history_handling == HistoryHandlingBehavior::Auto) {
+        // 1. If url equals navigable's active document's URL,
+        //    and initiatorOriginSnapshot is same origin with targetNavigable's active document's origin,
+        //    then set historyHandling to "replace".
+        // FIXME: What is "targetNavigable"? Using `this` for now.
+        if (url == active_document()->url() && initiator_origin_snapshot.is_same_origin(active_document()->origin()))
+            history_handling = HistoryHandlingBehavior::Replace;
+        // 2. Otherwise, set historyHandling to "push".
+        else
+            history_handling = HistoryHandlingBehavior::Push;
     }
 
-    // 8. If all of the following are true:
-    //    - documentResource is null;
-    //    - response is null;
-    //    - url equals navigable's active session history entry's URL with exclude fragments set to true; and
-    //    - url's fragment is non-null
+    // FIXME: 10. If the navigation must be a replace given url and navigable's active document, then set historyHandling to "replace".
+
+    // 11. If all of the following are true:
+    //     - documentResource is null;
+    //     - response is null;
+    //     - url equals navigable's active session history entry's URL with exclude fragments set to true; and
+    //     - url's fragment is non-null
+    //     then:
     if (document_resource.has<Empty>()
         && !response
         && url.equals(active_session_history_entry()->url, AK::URL::ExcludeFragment::Yes)
@@ -852,19 +874,19 @@ WebIDL::ExceptionOr<void> Navigable::navigate(
         return {};
     }
 
-    // 9. If navigable's parent is non-null, then set navigable's is delaying load events to true.
+    // 12. If navigable's parent is non-null, then set navigable's is delaying load events to true.
     if (parent() != nullptr) {
         set_delaying_load_events(true);
     }
 
-    // 10. Let targetBrowsingContext be navigable's active browsing context.
+    // 13. Let targetBrowsingContext be navigable's active browsing context.
     [[maybe_unused]] auto target_browsing_context = active_browsing_context();
 
-    // FIXME: 11. Let targetSnapshotParams be the result of snapshotting target snapshot params given navigable.
+    // FIXME: 14. Let targetSnapshotParams be the result of snapshotting target snapshot params given navigable.
 
-    // FIXME: 12. Invoke WebDriver BiDi navigation started with targetBrowsingContext, and a new WebDriver BiDi navigation status whose id is navigationId, url is url, and status is "pending".
+    // FIXME: 15. Invoke WebDriver BiDi navigation started with targetBrowsingContext, and a new WebDriver BiDi navigation status whose id is navigationId, url is url, and status is "pending".
 
-    // 13. If navigable's ongoing navigation is "traversal", then:
+    // 16. If navigable's ongoing navigation is "traversal", then:
     if (ongoing_navigation().has<Traversal>()) {
         // FIXME: 1. Invoke WebDriver BiDi navigation failed with targetBrowsingContext and a new WebDriver BiDi navigation status whose id is navigationId, status is "canceled", and url is url.
 
@@ -872,10 +894,10 @@ WebIDL::ExceptionOr<void> Navigable::navigate(
         return {};
     }
 
-    // 14. Set navigable's ongoing navigation to navigationId.
+    // 17. Set navigable's ongoing navigation to navigationId.
     m_ongoing_navigation = navigation_id;
 
-    // 15. If url's scheme is "javascript", then:
+    // 18. If url's scheme is "javascript", then:
     if (url.scheme() == "javascript"sv) {
         // 1. Queue a global task on the navigation and traversal task source given navigable's active window to navigate to a javascript: URL given navigable, url, historyHandling, initiatorOriginSnapshot, and cspNavigationType.
         queue_global_task(Task::Source::NavigationAndTraversal, *active_window(), [this, url, history_handling, initiator_origin_snapshot, csp_navigation_type] {
@@ -886,7 +908,36 @@ WebIDL::ExceptionOr<void> Navigable::navigate(
         return {};
     }
 
-    // 16. In parallel, run these steps:
+    // 19. If all of the following are true:
+    //     - userInvolvement is not "browser UI";
+    //     - navigable's active document's origin is same origin-domain with sourceDocument's origin;
+    //     - navigable's active document's is initial about:blank is false; and
+    //     - url's scheme is a fetch scheme
+    //     then:
+    if (user_involvement != "browser UI"
+        && active_document()->origin().is_same_origin_domain(source_document->origin())
+        && !active_document()->is_initial_about_blank()
+        && is_a_fetch_scheme(url.scheme())) {
+
+        // FIXME: 1. Let navigation be navigable's active window's navigation API.
+
+        // FIXME: 2. Let entryListForFiring be formDataEntryList if documentResource is a POST resource; otherwise, null.
+
+        // FIXME: 3. Let navigationAPIStateForFiring be navigationAPIState if navigationAPIState is not null;
+        //    otherwise, StructuredSerializeForStorage(undefined).
+
+        // FIXME: 4. Let continue be the result of firing a push/replace/reload navigate event at navigation
+        //    with navigationType set to historyHandling,
+        //    isSameDocument set to false,
+        //    userInvolvement set to userInvolvement,
+        //    formDataEntryList set to entryListForFiring,
+        //    destinationURL set to url,
+        //    and navigationAPIState set to navigationAPIStateForFiring.
+
+        // FIXME: 5. If continue is false, then return.
+    }
+
+    // 20. In parallel, run these steps:
     Platform::EventLoopPlugin::the().deferred_invoke([this, source_snapshot_params = move(source_snapshot_params), document_resource, url, navigation_id, referrer_policy, initiator_origin_snapshot, response, history_handling] {
         // FIXME: 1. Let unloadPromptCanceled be the result of checking if unloading is user-canceled for navigable's active document's inclusive descendant navigables.
 
@@ -909,33 +960,35 @@ WebIDL::ExceptionOr<void> Navigable::navigate(
         document_state->set_initiator_origin(initiator_origin_snapshot);
         document_state->set_navigable_target_name(target_name());
 
-        // 5. If url is about:blank, then set documentState's origin to documentState's initiator origin.
-        if (url == "about:blank"sv) {
-            document_state->set_origin(document_state->initiator_origin());
+        // 5. If url matches about:blank or is about:srcdoc, then:
+        if (url == "about:blank"sv || url == "about:srcdoc"sv) {
+            // 1. Set documentState's origin to initiatorOriginSnapshot.
+            document_state->set_origin(initiator_origin_snapshot);
+
+            // FIXME: 2. Set documentState's about base URL to initiatorBaseURLSnapshot.
         }
 
-        // 6. Otherwise, if url is about:srcdoc, then set documentState's origin to navigable's parent's active document's origin.
-        else if (url == "about:srcdoc"sv) {
-            document_state->set_origin(parent()->active_document()->origin());
-        }
-
-        // 7. Let historyEntry be a new session history entry, with its URL set to url and its document state set to documentState.
+        // 6. Let historyEntry be a new session history entry, with its URL set to url and its document state set to documentState.
         JS::NonnullGCPtr<SessionHistoryEntry> history_entry = *heap().allocate_without_realm<SessionHistoryEntry>();
         history_entry->url = url;
         history_entry->document_state = document_state;
 
-        // 8. Let navigationParams be null.
+        // 7. Let navigationParams be null.
         Optional<NavigationParams> navigation_params;
 
-        // FIXME: 9. If response is non-null:
+        // FIXME: 8. If response is non-null:
         if (response) {
         }
 
-        // 10. Attempt to populate the history entry's document
-        //     for historyEntry, given navigable, "navigate", sourceSnapshotParams,
-        //     targetSnapshotParams, navigationId, navigationParams, cspNavigationType, with allowPOST
-        //     set to true and completionSteps set to the following step:
+        // 9. Attempt to populate the history entry's document
+        //    for historyEntry, given navigable, "navigate", sourceSnapshotParams,
+        //    targetSnapshotParams, navigationId, navigationParams, cspNavigationType, with allowPOST
+        //    set to true and completionSteps set to the following step:
         populate_session_history_entry_document(history_entry, navigation_params, navigation_id, source_snapshot_params, [this, history_entry, history_handling] {
+            // FIXME: 1. Append session history traversal steps to navigable's traversable to finalize a cross-document navigation
+            //    given navigable, historyHandling, and historyEntry.
+            // FIXME: Append the code below as session history traversal steps, instead of calling it directly, I guess?
+
             // https://html.spec.whatwg.org/multipage/browsing-the-web.html#finalize-a-cross-document-navigation
 
             // 1. FIXME: Assert: this is running on navigable's traversable navigable's session history traversal queue.
@@ -996,6 +1049,7 @@ WebIDL::ExceptionOr<void> Navigable::navigate(
     return {};
 }
 
+// https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate-fragid
 WebIDL::ExceptionOr<void> Navigable::navigate_to_a_fragment(AK::URL const&, HistoryHandlingBehavior, String navigation_id)
 {
     (void)navigation_id;

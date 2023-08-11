@@ -15,6 +15,7 @@ enum class HistoryHandlingBehavior {
     Reload,      // FIXME: This is no longer part of the spec. Remove.
     Push,
     Replace,
+    Auto,
 };
 
 }
