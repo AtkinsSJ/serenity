@@ -226,6 +226,7 @@ private:
     RefPtr<StyleValue> parse_number_or_percentage_value(TokenStream<ComponentValue>&);
     RefPtr<StyleValue> parse_identifier_value(TokenStream<ComponentValue>&);
     RefPtr<StyleValue> parse_color_value(TokenStream<ComponentValue>&);
+    RefPtr<StyleValue> parse_counter_value(TokenStream<ComponentValue>&);
     RefPtr<StyleValue> parse_rect_value(TokenStream<ComponentValue>&);
     RefPtr<StyleValue> parse_ratio_value(TokenStream<ComponentValue>&);
     RefPtr<StyleValue> parse_string_value(TokenStream<ComponentValue>&);

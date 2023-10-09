@@ -35,6 +35,7 @@ Optional<CSSNumericType::BaseType> CSSNumericType::base_type_from_value_type(Val
 
     case ValueType::BackgroundPosition:
     case ValueType::Color:
+    case ValueType::Counter:
     case ValueType::CustomIdent:
     case ValueType::EasingFunction:
     case ValueType::FilterValueList:

@@ -91,6 +91,7 @@ using StyleValueVector = Vector<ValueComparingNonnullRefPtr<StyleValue const>>;
     __ENUMERATE_STYLE_VALUE_TYPE(Color, color)                             \
     __ENUMERATE_STYLE_VALUE_TYPE(ConicGradient, conic_gradient)            \
     __ENUMERATE_STYLE_VALUE_TYPE(Content, content)                         \
+    __ENUMERATE_STYLE_VALUE_TYPE(Counter, counter)                         \
     __ENUMERATE_STYLE_VALUE_TYPE(CustomIdent, custom_ident)                \
     __ENUMERATE_STYLE_VALUE_TYPE(Display, display)                         \
     __ENUMERATE_STYLE_VALUE_TYPE(Easing, easing)                           \

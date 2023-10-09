@@ -43,6 +43,7 @@
 #include <LibWeb/CSS/StyleValues/BorderRadiusStyleValue.h>
 #include <LibWeb/CSS/StyleValues/ColorStyleValue.h>
 #include <LibWeb/CSS/StyleValues/ContentStyleValue.h>
+#include <LibWeb/CSS/StyleValues/CounterStyleValue.h>
 #include <LibWeb/CSS/StyleValues/CustomIdentStyleValue.h>
 #include <LibWeb/CSS/StyleValues/DisplayStyleValue.h>
 #include <LibWeb/CSS/StyleValues/EasingStyleValue.h>
@@ -2538,6 +2539,120 @@ RefPtr<StyleValue> Parser::parse_color_value(TokenStream<ComponentValue>& tokens
             transaction.commit();
             return IdentifierStyleValue::create(ident.value());
         }
+    }
+
+    return nullptr;
+}
+
+// https://drafts.csswg.org/css-lists-3/#counter-functions
+RefPtr<StyleValue> Parser::parse_counter_value(TokenStream<ComponentValue>& tokens)
+{
+    auto parse_counter_name = [](TokenStream<ComponentValue>& tokens) -> RefPtr<StyleValue> {
+        // https://drafts.csswg.org/css-lists-3/#typedef-counter-name
+        // Counters are referred to in CSS syntax using the <counter-name> type, which represents
+        // their name as a <custom-ident>. A <counter-name> name cannot match the keyword none;
+        // such an identifier is invalid as a <counter-name>.
+        auto transaction = tokens.begin_transaction();
+        tokens.skip_whitespace();
+
+        auto& token = tokens.next_token();
+        if (!token.is(Token::Type::Ident) || token.token().ident() == "none"sv)
+            return nullptr;
+
+        tokens.skip_whitespace();
+        if (tokens.has_next_token())
+            return nullptr;
+
+        transaction.commit();
+        return CustomIdentStyleValue::create(token.token().ident());
+    };
+
+    auto parse_counter_style = [this](TokenStream<ComponentValue>& tokens) -> RefPtr<StyleValue> {
+        // FIXME: This and `list-style-type` both need to support custom counter-style names, and `symbols()`.
+        //        For now, we'll just parse a `list-style-type` here.
+
+        auto transaction = tokens.begin_transaction();
+        tokens.skip_whitespace();
+
+        auto identifier_value = parse_identifier_value(tokens);
+        if (!identifier_value)
+            return nullptr;
+
+        auto list_style_type = value_id_to_list_style_type(identifier_value->to_identifier());
+        if (!list_style_type.has_value())
+            return nullptr;
+
+        tokens.skip_whitespace();
+        if (tokens.has_next_token())
+            return nullptr;
+
+        transaction.commit();
+        return identifier_value;
+    };
+
+    auto transaction = tokens.begin_transaction();
+    auto token = tokens.next_token();
+    if (token.is_function("counter"sv)) {
+        // counter() = counter( <counter-name>, <counter-style>? )
+        auto& function = token.function();
+        TokenStream function_tokens { function.values() };
+        auto function_values = parse_a_comma_separated_list_of_component_values(function_tokens);
+        if (function_values.is_empty() || function_values.size() > 2)
+            return nullptr;
+
+        TokenStream name_tokens { function_values[0] };
+        RefPtr<StyleValue> counter_name = parse_counter_name(name_tokens);
+        if (!counter_name)
+            return nullptr;
+
+        RefPtr<StyleValue> counter_style;
+        if (function_values.size() > 1) {
+            TokenStream counter_style_tokens { function_values[1] };
+            counter_style = parse_counter_style(counter_style_tokens);
+            if (!counter_style)
+                return nullptr;
+        } else {
+            // In both cases, if the <counter-style> argument is omitted it defaults to `decimal`.
+            counter_style = IdentifierStyleValue::create(ValueID::Decimal);
+        }
+
+        transaction.commit();
+        return CounterStyleValue::create_counter(counter_name.release_nonnull(), counter_style.release_nonnull());
+    }
+
+    if (token.is_function("counters"sv)) {
+        // counters() = counters( <counter-name>, <string>, <counter-style>? )
+        auto& function = token.function();
+        TokenStream function_tokens { function.values() };
+        auto function_values = parse_a_comma_separated_list_of_component_values(function_tokens);
+        if (function_values.is_empty() || function_values.size() > 3)
+            return nullptr;
+
+        TokenStream name_tokens { function_values[0] };
+        RefPtr<StyleValue> counter_name = parse_counter_name(name_tokens);
+        if (!counter_name)
+            return nullptr;
+
+        if (function_values[1].size() != 1)
+            return nullptr;
+        TokenStream string_tokens { function_values[1] };
+        RefPtr<StyleValue> join_string = parse_string_value(string_tokens);
+        if (!join_string)
+            return nullptr;
+
+        RefPtr<StyleValue> counter_style;
+        if (function_values.size() > 2) {
+            TokenStream counter_style_tokens { function_values[2] };
+            counter_style = parse_counter_style(counter_style_tokens);
+            if (!counter_style)
+                return nullptr;
+        } else {
+            // In both cases, if the <counter-style> argument is omitted it defaults to `decimal`.
+            counter_style = IdentifierStyleValue::create(ValueID::Decimal);
+        }
+
+        transaction.commit();
+        return CounterStyleValue::create_counters(counter_name.release_nonnull(), join_string.release_nonnull(), counter_style.release_nonnull());
     }
 
     return nullptr;
@@ -6514,6 +6629,11 @@ Optional<Parser::PropertyAndValue> Parser::parse_css_value_for_properties(Readon
     if (auto property = any_property_accepts_type(property_ids, ValueType::Color); property.has_value()) {
         if (auto maybe_color = parse_color_value(tokens))
             return PropertyAndValue { *property, maybe_color };
+    }
+
+    if (auto property = any_property_accepts_type(property_ids, ValueType::Counter); property.has_value()) {
+        if (auto maybe_counter = parse_counter_value(tokens))
+            return PropertyAndValue { *property, maybe_counter };
     }
 
     if (auto property = any_property_accepts_type(property_ids, ValueType::Image); property.has_value()) {

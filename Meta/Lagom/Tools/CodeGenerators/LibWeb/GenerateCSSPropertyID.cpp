@@ -22,7 +22,7 @@ bool is_animatable_property(JsonObject& properties, StringView property_name);
 static bool type_name_is_enum(StringView type_name)
 {
     return !AK::first_is_one_of(type_name,
-        "angle"sv, "background-position"sv, "color"sv, "custom-ident"sv, "easing-function"sv, "flex"sv, "frequency"sv, "image"sv,
+        "angle"sv, "background-position"sv, "color"sv, "counter"sv, "custom-ident"sv, "easing-function"sv, "flex"sv, "frequency"sv, "image"sv,
         "integer"sv, "length"sv, "number"sv, "paint"sv, "percentage"sv, "position"sv, "ratio"sv, "rect"sv,
         "resolution"sv, "string"sv, "time"sv, "url"sv);
 }
@@ -181,6 +181,7 @@ enum class ValueType {
     Angle,
     BackgroundPosition,
     Color,
+    Counter,
     CustomIdent,
     EasingFunction,
     FilterValueList,
@@ -701,6 +702,8 @@ bool property_accepts_type(PropertyID property_id, ValueType value_type)
                     property_generator.appendln("        case ValueType::BackgroundPosition:");
                 } else if (type_name == "color") {
                     property_generator.appendln("        case ValueType::Color:");
+                } else if (type_name == "counter") {
+                    property_generator.appendln("        case ValueType::Counter:");
                 } else if (type_name == "custom-ident") {
                     property_generator.appendln("        case ValueType::CustomIdent:");
                 } else if (type_name == "easing-function") {
