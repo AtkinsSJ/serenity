@@ -34,6 +34,7 @@ set(SOURCES
     CSS/AnimationEvent.cpp
     CSS/CalculatedOr.cpp
     CSS/Clip.cpp
+    CSS/CountersSet.cpp
     CSS/CSS.cpp
     CSS/CSSAnimation.cpp
     CSS/CSSConditionRule.cpp

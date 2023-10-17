@@ -2546,4 +2546,95 @@ CSS::StyleSheetList& Element::document_or_shadow_root_style_sheets()
     return document().style_sheets();
 }
 
+Optional<CSS::CountersSet const&> Element::counters_set()
+{
+    if (!m_counters_set)
+        return {};
+    return *m_counters_set;
+}
+
+void Element::instantiate_a_counter(FlyString name, bool reversed, Optional<CSS::CounterValue> value)
+{
+    // 1. Let counters be element’s CSS counters set.
+    // NOTE: We use nullptr for an empty CountersSet, so must ensure it exists here.
+    if (!has_non_empty_counters_set())
+        m_counters_set = make<CSS::CountersSet>();
+    auto& counters = *m_counters_set;
+
+    // 2. Let innermost counter be the last counter in counters with the name name.
+    //    If innermost counter’s originating element is element or a previous sibling of element,
+    //    remove innermost counter from counters.
+    auto innermost_counter = counters.last_counter_with_name(name);
+    if (innermost_counter.has_value()) {
+        auto* originating_node = Node::from_unique_id(innermost_counter->originating_element_id);
+        VERIFY(originating_node);
+        auto& innermost_element = verify_cast<Element>(*originating_node);
+
+        if (&innermost_element == this
+            || (innermost_element.parent() == parent() && innermost_element.is_before(*this))) {
+            counters.remove(*innermost_counter);
+        }
+    }
+
+    // 3. Append a new counter to counters with name name, originating element element,
+    //    reversed being reversed, and initial value value (if given)
+    counters.append(move(name), unique_id(), reversed, value);
+}
+
+// https://drafts.csswg.org/css-lists-3/#inherit-counters
+void Element::inherit_counters()
+{
+    // 1. If element is the root of its document tree, the element has an initially-empty CSS counters set.
+    //    Return.
+    if (parent() == nullptr) {
+        // NOTE: We represent an empty counters set with `m_counters_set = nullptr`.
+        return;
+    }
+
+    // 2. Let element counters, representing element’s own CSS counters set, be a copy of the CSS counters
+    //    set of element’s parent element.
+    OwnPtr<CSS::CountersSet> element_counters;
+    // OPTIMIZATION: If parent has a set, we create a copy. Otherwise, we avoid allocating one until we need
+    // to add something to it.
+    auto ensure_element_counters = [&]() {
+        if (!element_counters)
+            element_counters = make<CSS::CountersSet>();
+    };
+    if (parent_element()->has_non_empty_counters_set()) {
+        element_counters = make<CSS::CountersSet>();
+        *element_counters = *parent_element()->counters_set();
+    }
+
+    // 3. Let sibling counters be the CSS counters set of element’s preceding sibling (if it has one),
+    //    or an empty CSS counters set otherwise.
+    //    For each counter of sibling counters, if element counters does not already contain a counter with
+    //    the same name, append a copy of counter to element counters.
+    if (auto sibling = previous_sibling_of_type<Element>(); sibling && sibling->has_non_empty_counters_set()) {
+        auto sibling_counters = sibling->counters_set().release_value();
+        ensure_element_counters();
+        for (auto& counter : sibling_counters.counters()) {
+            if (!element_counters->last_counter_with_name(counter.name).has_value())
+                element_counters->append(counter.name, counter.originating_element_id, counter.reversed, counter.value);
+        }
+    }
+
+    // 4. Let value source be the CSS counters set of the element immediately preceding element in tree order.
+    //    For each source counter of value source, if element counters contains a counter with the same name
+    //    and creator, then set the value of that counter to source counter’s value.
+    if (auto previous = previous_element_in_pre_order(); previous && previous->has_non_empty_counters_set()) {
+        // NOTE: If element_counters is empty (AKA null) then we can skip this since nothing will match.
+        if (element_counters) {
+            auto value_source = previous->counters_set().release_value();
+            for (auto& source_counter : value_source.counters()) {
+                auto maybe_existing_counter = element_counters->counter_with_same_name_and_creator(source_counter.name, source_counter.originating_element_id);
+                if (maybe_existing_counter.has_value())
+                    maybe_existing_counter->value = source_counter.value;
+            }
+        }
+    }
+
+    VERIFY(!element_counters || !element_counters->is_empty());
+    m_counters_set = move(element_counters);
+}
+
 }

@@ -11,6 +11,7 @@
 #include <LibWeb/Bindings/ElementPrototype.h>
 #include <LibWeb/Bindings/Intrinsics.h>
 #include <LibWeb/Bindings/ShadowRootPrototype.h>
+#include <LibWeb/CSS/CountersSet.h>
 #include <LibWeb/CSS/Selector.h>
 #include <LibWeb/CSS/StyleInvalidation.h>
 #include <LibWeb/CSS/StyleProperty.h>
@@ -376,6 +377,12 @@ public:
     void set_in_top_layer(bool in_top_layer) { m_in_top_layer = in_top_layer; }
     bool in_top_layer() const { return m_in_top_layer; }
 
+    bool has_non_empty_counters_set() const { return m_counters_set; }
+    Optional<CSS::CountersSet const&> counters_set();
+    // https://drafts.csswg.org/css-lists-3/#instantiate-counter
+    void instantiate_a_counter(FlyString name, bool reversed, Optional<CSS::CounterValue>);
+    void inherit_counters();
+
 protected:
     Element(Document&, DOM::QualifiedName);
     virtual void initialize(JS::Realm&) override;
@@ -451,6 +458,8 @@ private:
     Array<CSSPixelPoint, 3> m_scroll_offset;
 
     bool m_in_top_layer { false };
+
+    OwnPtr<CSS::CountersSet> m_counters_set;
 };
 
 template<>

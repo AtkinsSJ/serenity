@@ -162,6 +162,11 @@ public:
         return !m_value;
     }
 
+    ALWAYS_INLINE constexpr bool operator==(Checked<T> const& other) const
+    {
+        return value() == other.value();
+    }
+
     ALWAYS_INLINE constexpr T value() const
     {
         VERIFY(!m_overflow);
