@@ -36,6 +36,7 @@ TEST_CASE(contains_slow)
     EXPECT(array.contains_slow(4));
     EXPECT(array.contains_slow(7));
     EXPECT(!array.contains_slow(42));
+    FAIL("This test fails now for no reason!");
 }
 
 TEST_CASE(first_index_of)
